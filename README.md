@@ -11,3 +11,4 @@ Class "SdlcSystemRestController.java" has been commented out due to references t
 
 Other files received were placed under src/main/resources/static
 
+Project was connected to MySQL for data persistence. Connection configuration are found under src/main/configuration.properties
