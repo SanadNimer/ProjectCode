@@ -4,6 +4,7 @@ import com.company.resourceapi.controllers.ProjectRestController;
 import com.company.resourceapi.repositories.ProjectRepository;
 import com.company.resourceapi.repositories.SdlcSystemRepository;
 import com.company.resourceapi.services.ProjectService;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.jupiter.api.BeforeAll;
@@ -55,8 +56,7 @@ class ProjectCodeApplicationTests {
 
     // #################### Testing Post API's #######################
     @Test
-    public void createProjectWithFullPayload() throws Exception
-    {
+    public void createProjectWithFullPayload() throws Exception {
         MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders
                 .post("/api/v2/projects")
                 .content("{\n\t\"externalId\": \"EXTERNALID\",\n\t\"name\": \"Name\",\n\t\"sdlcSystem\": {\n\t\t\"id\": 1\n\t}\n}")
@@ -71,8 +71,7 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void createProjectWithMinimalPayload() throws Exception
-    {
+    public void createProjectWithMinimalPayload() throws Exception {
         MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders
                 .post("/api/v2/projects")
                 .content("{\n\t\"externalId\": \"EXTERNAL-ID\",\n\t\"sdlcSystem\": {\n\t\t\"id\": 1\n\t}\n}")
@@ -86,9 +85,8 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void createProjectWithPayloadContainingIllegalValue() throws Exception
-    {
-        mockMvc.perform( MockMvcRequestBuilders
+    public void createProjectWithPayloadContainingIllegalValue() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
                 .post("/api/v2/projects")
                 .content("{\n\t\"sdlcSystem\": {\n\t\t\"id\": \"Whatever\"\n\t}\n}")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -98,9 +96,8 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void createProjectWithPayloadNotContainingExternalId() throws Exception
-    {
-        mockMvc.perform( MockMvcRequestBuilders
+    public void createProjectWithPayloadNotContainingExternalId() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
                 .post("/api/v2/projects")
                 .content("{\n\t\"sdlcSystem\": {\n\t\t\"id\": 1\n\t}\n}")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -110,9 +107,8 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void createProjectWithPayloadNotContainingSystem() throws Exception
-    {
-        mockMvc.perform( MockMvcRequestBuilders
+    public void createProjectWithPayloadNotContainingSystem() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
                 .post("/api/v2/projects")
                 .content("{\n\t\"externalId\": \"EXTERNAL-ID\"\n}")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -122,9 +118,8 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void createProjectWithPayloadContainingNonExistingSystem() throws Exception
-    {
-        mockMvc.perform( MockMvcRequestBuilders
+    public void createProjectWithPayloadContainingNonExistingSystem() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
                 .post("/api/v2/projects")
                 .content("{\n\t\"externalId\": \"EXTERNALID\",\n\t\"sdlcSystem\": {\n\t\t\"id\": 12345\n\t}\n}")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -134,9 +129,8 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void createProjectWithPayloadContainingConflictingSystemAndExternalId() throws Exception
-    {
-        mockMvc.perform( MockMvcRequestBuilders
+    public void createProjectWithPayloadContainingConflictingSystemAndExternalId() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
                 .post("/api/v2/projects")
                 .content("{\n\t\"externalId\": \"SAMPLEPROJECT\",\n\t\"sdlcSystem\": {\n\t\t\"id\": 1\n\t}\n}")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -148,73 +142,101 @@ class ProjectCodeApplicationTests {
     //############ Testing Patch API's ##################
 
     @Test
-    public void updateProjectWithFullPayload() throws Exception
-    {
-        mockMvc.perform(MockMvcRequestBuilders
+    public void updateProjectWithFullPayload() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/5")
                 .content("{\n\t\"externalId\": \"EXTERNALIDEDITED\",\n\t\"name\": \"Name-Edited\",\n\t\"sdlcSystem\": {\n\t\t\"id\": 1\n\t}\n}")
                 .characterEncoding("utf8")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+
+        String response = mvcResult.getResponse().getContentAsString();
+        Assert.assertEquals("EXTERNALIDEDITED", JsonPath.parse(response).read("$.externalId"));
+        Assert.assertEquals("Name-Edited", JsonPath.parse(response).read("$.name"));
+        Assert.assertEquals(Integer.valueOf(1), JsonPath.parse(response).read("$.sdlcSystem.id"));
     }
 
     @Test
-    public void updateProjectWithOnlyExternalId() throws Exception
-    {
-        mockMvc.perform(MockMvcRequestBuilders
+    public void updateProjectWithOnlyExternalId() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/6")
                 .content("{\n\t\"externalId\": \"EXTERNALIDEDITED\"\n}")
                 .characterEncoding("utf8")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String response = mvcResult.getResponse().getContentAsString();
+        Assert.assertEquals("EXTERNALIDEDITED", JsonPath.parse(response).read("$.externalId"));
+        Assert.assertEquals("Project One", JsonPath.parse(response).read("$.name"));
+        Assert.assertEquals(Integer.valueOf(3), JsonPath.parse(response).read("$.sdlcSystem.id"));
+
     }
 
     @Test
-    public void updateProjectWithOnlySystemId() throws Exception
-    {
-        mockMvc.perform(MockMvcRequestBuilders
+    public void updateProjectWithOnlySystemId() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/7")
                 .content("{\n\t\"sdlcSystem\": {\n\t\t\"id\": 1\n\t}\n}")
                 .characterEncoding("utf8")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String response = mvcResult.getResponse().getContentAsString();
+        Assert.assertEquals("PROJECTTWO", JsonPath.parse(response).read("$.externalId"));
+        Assert.assertEquals("Project Two", JsonPath.parse(response).read("$.name"));
+        Assert.assertEquals(Integer.valueOf(1), JsonPath.parse(response).read("$.sdlcSystem.id"));
+
     }
 
     @Test
-    public void updateProjectEmptyPayload() throws Exception
-    {
-        mockMvc.perform(MockMvcRequestBuilders
+    public void updateProjectEmptyPayload() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/8")
                 .content("{\n}")
                 .characterEncoding("utf8")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String response = mvcResult.getResponse().getContentAsString();
+        Assert.assertEquals("PROJECTTHREE", JsonPath.parse(response).read("$.externalId"));
+        Assert.assertEquals("Project Three", JsonPath.parse(response).read("$.name"));
+        Assert.assertEquals(Integer.valueOf(3), JsonPath.parse(response).read("$.sdlcSystem.id"));
+
+
     }
 
     @Test
-    public void updateProjectWithNullName() throws Exception
-    {
-        mockMvc.perform(MockMvcRequestBuilders
+    public void updateProjectWithNullName() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/5")
                 .content("{\n    \"name\": null\n}")
                 .characterEncoding("utf8")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String response = mvcResult.getResponse().getContentAsString();
+        Assert.assertNull( JsonPath.parse(response).read("$.name"));
+
     }
 
     @Test
-    public void updateProjectPayloadContainingIllegalValues() throws Exception
-    {
+    public void updateProjectPayloadContainingIllegalValues() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/1")
                 .content("{\n\t\"sdlcSystem\": {\n\t\t\"id\": \"Whatever\"\n\t}\n}")
@@ -226,8 +248,7 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void updateProjectPayloadContainingNonExistingSystem() throws Exception
-    {
+    public void updateProjectPayloadContainingNonExistingSystem() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/1")
                 .content("{\n\t\"sdlcSystem\": {\n\t\t\"id\": 12345\n\t}\n}")
@@ -239,8 +260,7 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void updateProjectPayloadContainingConflictingSystem() throws Exception
-    {
+    public void updateProjectPayloadContainingConflictingSystem() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/1")
                 .content("{\n\t\"sdlcSystem\": {\n\t\t\"id\": 2\n\t}\n}")
@@ -252,8 +272,7 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void updateProjectPayloadContainingConflictingExternalId() throws Exception
-    {
+    public void updateProjectPayloadContainingConflictingExternalId() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/1")
                 .content("{\n\t\"externalId\": \"PROJECTX\"\n}")
@@ -265,8 +284,7 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void updateProjectPayloadContainingConflictingExternalIdAndSystem() throws Exception
-    {
+    public void updateProjectPayloadContainingConflictingExternalIdAndSystem() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/1")
                 .content("{\n\t\"externalId\": \"PROJECTX\",\n\t\"sdlcSystem\": {\n\t\t\"id\": 2\n\t}\n}")
@@ -278,8 +296,7 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void updateProjectWithIllegalPathVariable() throws Exception
-    {
+    public void updateProjectWithIllegalPathVariable() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/whatever")
                 .content("{}")
@@ -291,8 +308,7 @@ class ProjectCodeApplicationTests {
     }
 
     @Test
-    public void updateProjectWithInvalidPathVariable() throws Exception
-    {
+    public void updateProjectWithInvalidPathVariable() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
                 .patch("/api/v2/projects/1234")
                 .content("{}")
